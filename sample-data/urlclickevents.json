@@ -1,0 +1,47 @@
+[
+  {
+    "TimeGenerated": "2026-03-16T17:00:00Z",
+    "AccountUpn": "ana.costa@contoso-lab.example",
+    "Url": "https://login-verify.example.xyz/mailbox",
+    "ActionType": "ClickAllowed",
+    "IPAddress": "192.0.2.10",
+    "NetworkMessageId": "lab-msg-0001",
+    "Workload": "Email"
+  },
+  {
+    "TimeGenerated": "2026-03-16T17:05:00Z",
+    "AccountUpn": "bruno.lima@contoso-lab.example",
+    "Url": "https://micr0soft-secure.top/login",
+    "ActionType": "ClickAllowed",
+    "IPAddress": "192.0.2.30",
+    "NetworkMessageId": "lab-msg-0002",
+    "Workload": "Email"
+  },
+  {
+    "TimeGenerated": "2026-03-16T17:10:00Z",
+    "AccountUpn": "carla.nunes@contoso-lab.example",
+    "Url": "https://fatura.example.ru/pay",
+    "ActionType": "ClickBlocked",
+    "IPAddress": "192.0.2.20",
+    "NetworkMessageId": "lab-msg-0003",
+    "Workload": "Email"
+  },
+  {
+    "TimeGenerated": "2026-03-16T17:20:00Z",
+    "AccountUpn": "ana.costa@contoso-lab.example",
+    "Url": "https://intranet.contoso-lab.example/portal",
+    "ActionType": "ClickAllowed",
+    "IPAddress": "192.0.2.10",
+    "NetworkMessageId": "lab-msg-0004",
+    "Workload": "Email"
+  },
+  {
+    "TimeGenerated": "2026-03-16T17:30:00Z",
+    "AccountUpn": "diego.souza@contoso-lab.example",
+    "Url": "https://learn.microsoft.com/pt-br/training",
+    "ActionType": "ClickAllowed",
+    "IPAddress": "192.0.2.45",
+    "NetworkMessageId": "lab-msg-0005",
+    "Workload": "Email"
+  }
+]

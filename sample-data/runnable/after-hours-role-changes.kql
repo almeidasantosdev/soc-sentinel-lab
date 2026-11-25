@@ -1,0 +1,37 @@
+// Consulta pronta para teste neste laboratório.
+// Os eventos são sintéticos. O let vale só para esta execução e não grava dados.
+let AuditLogs = datatable (
+    TimeGenerated: datetime,
+    Category: string,
+    OperationName: string,
+    Result: string,
+    CorrelationId: string,
+    InitiatedBy: dynamic,
+    TargetResources: dynamic
+)
+[
+    datetime(2026-03-16T16:00:00Z), "RoleManagement", "Add member to role", "success", "lab-corr-0001", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"bruno.lima@contoso-lab.example","displayName":"bruno.lima"},{"type":"Role","displayName":"Global Administrator"}]),
+    datetime(2026-03-16T16:30:00Z), "RoleManagement", "Add member to role", "success", "lab-corr-0002", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"estagiario.lab@contoso-lab.example","displayName":"estagiario.lab"},{"type":"Role","displayName":"Directory Readers"}]),
+    datetime(2026-03-16T16:40:00Z), "RoleManagement", "Add member to role", "failure", "lab-corr-0003", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"carla.nunes@contoso-lab.example","displayName":"carla.nunes"},{"type":"Role","displayName":"Security Administrator"}]),
+    datetime(2026-03-16T23:10:00Z), "RoleManagement", "Add member to role", "success", "lab-corr-0004", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"diego.souza@contoso-lab.example","displayName":"diego.souza"},{"type":"Role","displayName":"User Administrator"}])
+];
+AuditLogs
+| where Category =~ "RoleManagement"
+| where Result =~ "success"
+| extend Hour = datetime_part("hour", TimeGenerated)
+| where Hour < 8 or Hour >= 19
+| mv-expand TargetResource = TargetResources
+| extend ResourceType = tostring(TargetResource.type)
+| extend RoleName = iff(ResourceType =~ "Role", tostring(TargetResource.displayName), "")
+| extend TargetUpn = iff(ResourceType =~ "User", tostring(TargetResource.userPrincipalName), "")
+| extend ActorUpn = tostring(InitiatedBy.user.userPrincipalName)
+| summarize
+    Roles = make_set(RoleName, 5),
+    Targets = make_set(TargetUpn, 5),
+    EventTime = min(TimeGenerated)
+    by CorrelationId, OperationName, ActorUpn
+| extend
+    timestamp = EventTime,
+    RoleName = tostring(Roles[0]),
+    TargetUpn = tostring(Targets[0])
+| order by timestamp desc

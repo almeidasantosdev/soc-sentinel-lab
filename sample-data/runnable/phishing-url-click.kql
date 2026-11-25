@@ -1,0 +1,43 @@
+// Consulta pronta para teste neste laboratório.
+// Os eventos são sintéticos. O let vale só para esta execução e não grava dados.
+let UrlClickEvents = datatable (
+    TimeGenerated: datetime,
+    AccountUpn: string,
+    Url: string,
+    ActionType: string,
+    IPAddress: string,
+    NetworkMessageId: string,
+    Workload: string
+)
+[
+    datetime(2026-03-16T17:00:00Z), "ana.costa@contoso-lab.example", "https://login-verify.example.xyz/mailbox", "ClickAllowed", "192.0.2.10", "lab-msg-0001", "Email",
+    datetime(2026-03-16T17:05:00Z), "bruno.lima@contoso-lab.example", "https://micr0soft-secure.top/login", "ClickAllowed", "192.0.2.30", "lab-msg-0002", "Email",
+    datetime(2026-03-16T17:10:00Z), "carla.nunes@contoso-lab.example", "https://fatura.example.ru/pay", "ClickBlocked", "192.0.2.20", "lab-msg-0003", "Email",
+    datetime(2026-03-16T17:20:00Z), "ana.costa@contoso-lab.example", "https://intranet.contoso-lab.example/portal", "ClickAllowed", "192.0.2.10", "lab-msg-0004", "Email",
+    datetime(2026-03-16T17:30:00Z), "diego.souza@contoso-lab.example", "https://learn.microsoft.com/pt-br/training", "ClickAllowed", "192.0.2.45", "lab-msg-0005", "Email"
+];
+let suspiciousTlds = dynamic(["zip", "mov", "ru", "top", "click", "xyz"]);
+let lookalikeTokens = dynamic(["micr0soft", "microsft", "login-verify", "secure-update", "paypa1"]);
+UrlClickEvents
+| where ActionType =~ "ClickAllowed"
+| extend Domain = tolower(tostring(parse_url(Url).Host))
+| extend Tld = tolower(tostring(split(Domain, ".")[-1]))
+| where isnotempty(Domain)
+| where Domain !endswith "contoso-lab.example"
+| where Tld in (suspiciousTlds) or Domain has_any (lookalikeTokens)
+| extend
+    Name = tostring(split(AccountUpn, "@")[0]),
+    UPNSuffix = tostring(split(AccountUpn, "@")[1]),
+    StartTime = TimeGenerated,
+    EndTime = TimeGenerated
+| project
+    StartTime,
+    EndTime,
+    AccountUpn,
+    Name,
+    UPNSuffix,
+    Url,
+    Domain,
+    ActionType,
+    IPAddress,
+    NetworkMessageId

@@ -1,0 +1,6 @@
+TimeGenerated,AccountUpn,Url,ActionType,IPAddress,NetworkMessageId,Workload
+2026-03-16T17:00:00Z,ana.costa@contoso-lab.example,https://login-verify.example.xyz/mailbox,ClickAllowed,192.0.2.10,lab-msg-0001,Email
+2026-03-16T17:05:00Z,bruno.lima@contoso-lab.example,https://micr0soft-secure.top/login,ClickAllowed,192.0.2.30,lab-msg-0002,Email
+2026-03-16T17:10:00Z,carla.nunes@contoso-lab.example,https://fatura.example.ru/pay,ClickBlocked,192.0.2.20,lab-msg-0003,Email
+2026-03-16T17:20:00Z,ana.costa@contoso-lab.example,https://intranet.contoso-lab.example/portal,ClickAllowed,192.0.2.10,lab-msg-0004,Email
+2026-03-16T17:30:00Z,diego.souza@contoso-lab.example,https://learn.microsoft.com/pt-br/training,ClickAllowed,192.0.2.45,lab-msg-0005,Email

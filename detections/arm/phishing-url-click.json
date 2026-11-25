@@ -1,0 +1,96 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Nome do workspace de Log Analytics do laboratório."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "apiVersion": "2023-02-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/Microsoft.SecurityInsights/', '6faac830-7e18-58ea-b414-330062d7b09f')]",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Clique permitido em URL de phishing",
+        "description": "Esta consulta identifica cliques permitidos em URLs cujo domínio usa\num TLD frequente em golpe ou imita uma marca conhecida. Cliques já\nbloqueados ficam de fora: o controle funcionou e o caso vai para caçada.",
+        "severity": "Medium",
+        "enabled": false,
+        "query": "let suspiciousTlds = dynamic([\"zip\", \"mov\", \"ru\", \"top\", \"click\", \"xyz\"]);\nlet lookalikeTokens = dynamic([\"micr0soft\", \"microsft\", \"login-verify\", \"secure-update\", \"paypa1\"]);\nUrlClickEvents\n| where ActionType =~ \"ClickAllowed\"\n| extend Domain = tolower(tostring(parse_url(Url).Host))\n| extend Tld = tolower(tostring(split(Domain, \".\")[-1]))\n| where isnotempty(Domain)\n| where Domain !endswith \"contoso-lab.example\"\n| where Tld in (suspiciousTlds) or Domain has_any (lookalikeTokens)\n| extend\n    Name = tostring(split(AccountUpn, \"@\")[0]),\n    UPNSuffix = tostring(split(AccountUpn, \"@\")[1]),\n    StartTime = TimeGenerated,\n    EndTime = TimeGenerated\n| project\n    StartTime,\n    EndTime,\n    AccountUpn,\n    Name,\n    UPNSuffix,\n    Url,\n    Domain,\n    ActionType,\n    IPAddress,\n    NetworkMessageId",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "InitialAccess"
+        ],
+        "techniques": [
+          "T1566",
+          "T1566.002"
+        ],
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountUpn"
+              },
+              {
+                "identifier": "Name",
+                "columnName": "Name"
+              },
+              {
+                "identifier": "UPNSuffix",
+                "columnName": "UPNSuffix"
+              }
+            ]
+          },
+          {
+            "entityType": "URL",
+            "fieldMappings": [
+              {
+                "identifier": "Url",
+                "columnName": "Url"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPAddress"
+              }
+            ]
+          }
+        ],
+        "eventGroupingSettings": {
+          "aggregationKind": "AlertPerResult"
+        },
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5H",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+          }
+        },
+        "alertDetailsOverride": {
+          "alertDisplayNameFormat": "Clique permitido de {{AccountUpn}}",
+          "alertDescriptionFormat": "Domínio {{Domain}} passou do controle de clique."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Nome do workspace de Log Analytics do laboratório."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "apiVersion": "2023-02-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/Microsoft.SecurityInsights/', '511e0e6e-0a5d-5b53-b541-cea3f29758d8')]",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Entrada externa negada em porta administrativa",
+        "description": "Esta consulta identifica volume de tentativas negadas, a partir de\nendereços IP públicos, contra portas administrativas. O foco é\nvarredura ou acesso remoto indevido visto em log no formato CEF.",
+        "severity": "Medium",
+        "enabled": false,
+        "query": "let adminPorts = dynamic([22, 135, 445, 1433, 3389, 5985, 5986]);\nlet attemptThreshold = 5;\nCommonSecurityLog\n| where DestinationPort in (adminPorts)\n| where DeviceAction in~ (\"deny\", \"denied\", \"drop\", \"dropped\", \"block\", \"blocked\")\n| where isnotempty(SourceIP) and isnotempty(DestinationIP)\n| where ipv4_is_private(SourceIP) == false\n| summarize\n    Attempts = count(),\n    Ports = make_set(DestinationPort, 10),\n    Actions = make_set(DeviceAction, 5),\n    StartTime = min(TimeGenerated),\n    EndTime = max(TimeGenerated)\n    by SourceIP, DestinationIP, DeviceProduct\n| where Attempts >= attemptThreshold\n| extend\n    AttemptsText = tostring(Attempts),\n    PortsText = strcat_array(Ports, \",\")",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "InitialAccess",
+          "LateralMovement"
+        ],
+        "techniques": [
+          "T1133",
+          "T1021",
+          "T1021.001"
+        ],
+        "entityMappings": [
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "SourceIP"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "DestinationIP"
+              }
+            ]
+          }
+        ],
+        "eventGroupingSettings": {
+          "aggregationKind": "AlertPerResult"
+        },
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5H",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+          }
+        },
+        "customDetails": {
+          "Attempts": "AttemptsText",
+          "Ports": "PortsText"
+        },
+        "alertDetailsOverride": {
+          "alertDisplayNameFormat": "Varredura administrativa de {{SourceIP}} para {{DestinationIP}}",
+          "alertDescriptionFormat": "{{AttemptsText}} tentativas negadas em portas administrativas."
+        }
+      }
+    }
+  ]
+}

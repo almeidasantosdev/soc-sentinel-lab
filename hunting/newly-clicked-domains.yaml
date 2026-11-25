@@ -1,0 +1,46 @@
+id: 49999fe7-b780-5e1b-bdee-43a5ed838cb0
+name: Domínios externos em cliques permitidos
+description: |
+  Esta consulta agrupa cliques permitidos por domínio fora da zona do laboratório. O analista revisa o que não foi pego pela regra de phishing.
+requiredDataConnectors:
+  - connectorId: MicrosoftThreatProtection
+    dataTypes:
+      - UrlClickEvents
+tactics:
+  - InitialAccess
+relevantTechniques:
+  - T1566
+  - T1566.002
+query: |
+  UrlClickEvents
+  | where ActionType =~ "ClickAllowed"
+  | extend Domain = tolower(tostring(parse_url(Url).Host))
+  | where isnotempty(Domain) and Domain !endswith "contoso-lab.example"
+  | summarize
+      ClickCount = count(),
+      Accounts = make_set(AccountUpn, 10),
+      Urls = make_set(Url, 5),
+      FirstSeen = min(TimeGenerated),
+      LastSeen = max(TimeGenerated)
+      by Domain
+  | extend
+      timestamp = FirstSeen,
+      AccountUpn = tostring(Accounts[0]),
+      Url = tostring(Urls[0])
+  | order by ClickCount asc, Domain asc
+entityMappings:
+  - entityType: DNS
+    fieldMappings:
+      - identifier: DomainName
+        columnName: Domain
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: AccountUpn
+  - entityType: URL
+    fieldMappings:
+      - identifier: Url
+        columnName: Url
+falsePositives: |
+  Documentação, parceiro e ferramenta SaaS recém-adotada. Domínio raro não é, por si, malicioso.
+version: 1.0.0

@@ -1,0 +1,47 @@
+id: 0dde5680-7a4b-5f72-9894-69451d354e34
+name: Mudança de função fora do horário do laboratório
+description: |
+  Esta consulta lista mudanças de função bem-sucedidas fora de 08:00–19:00 UTC. Serve para achar concessão fora da janela de mudança.
+requiredDataConnectors:
+  - connectorId: AzureActiveDirectory
+    dataTypes:
+      - AuditLogs
+tactics:
+  - Persistence
+  - PrivilegeEscalation
+relevantTechniques:
+  - T1098
+  - T1098.003
+query: |
+  AuditLogs
+  | where Category =~ "RoleManagement"
+  | where Result =~ "success"
+  | extend Hour = datetime_part("hour", TimeGenerated)
+  | where Hour < 8 or Hour >= 19
+  | mv-expand TargetResource = TargetResources
+  | extend ResourceType = tostring(TargetResource.type)
+  | extend RoleName = iff(ResourceType =~ "Role", tostring(TargetResource.displayName), "")
+  | extend TargetUpn = iff(ResourceType =~ "User", tostring(TargetResource.userPrincipalName), "")
+  | extend ActorUpn = tostring(InitiatedBy.user.userPrincipalName)
+  | summarize
+      Roles = make_set(RoleName, 5),
+      Targets = make_set(TargetUpn, 5),
+      EventTime = min(TimeGenerated)
+      by CorrelationId, OperationName, ActorUpn
+  | extend
+      timestamp = EventTime,
+      RoleName = tostring(Roles[0]),
+      TargetUpn = tostring(Targets[0])
+  | order by timestamp desc
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: ActorUpn
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: TargetUpn
+falsePositives: |
+  Emergência autorizada e operação de outro fuso. A janela UTC é convenção deste laboratório.
+version: 1.0.0

@@ -1,0 +1,59 @@
+id: b8c7801e-e2e0-5625-a574-f1f2a3c1cd7a
+name: Exclusão em massa de arquivos
+description: |
+  Esta consulta identifica uma conta que apagou muitos objetos distintos
+  no mesmo computador. O evento 4663 com acesso DELETE ou máscara %%1537
+  representa exclusão auditada no Windows.
+severity: High
+requiredDataConnectors:
+  - connectorId: SecurityEvents
+    dataTypes:
+      - SecurityEvent
+queryFrequency: 1h
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+status: Available
+tactics:
+  - Impact
+relevantTechniques:
+  - T1485
+query: |
+  let deleteThreshold = 25;
+  SecurityEvent
+  | where EventID == 4663
+  | where AccessList has "DELETE" or AccessList has "%%1537"
+  | where isnotempty(ObjectName) and isnotempty(Account)
+  | summarize
+      DeletedObjects = dcount(ObjectName),
+      SampleObjects = make_set(ObjectName, 8),
+      StartTime = min(TimeGenerated),
+      EndTime = max(TimeGenerated)
+      by Account, Computer
+  | where DeletedObjects >= deleteThreshold
+  | extend
+      DeletedObjectsText = tostring(DeletedObjects),
+      SampleObjectsText = strcat_array(SampleObjects, "; ")
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: Account
+  - entityType: Host
+    fieldMappings:
+      - identifier: FullName
+        columnName: Computer
+customDetails:
+  DeletedObjects: DeletedObjectsText
+  SampleObjects: SampleObjectsText
+alertDetailsOverride:
+  alertDisplayNameFormat: "Exclusão em massa por {{Account}} em {{Computer}}"
+  alertDescriptionFormat: "{{DeletedObjectsText}} objetos distintos apagados na janela da regra."
+eventGroupingSettings:
+  aggregationKind: AlertPerResult
+falsePositives: |
+  Limpeza agendada de pasta temporária, rotação de backup e desligamento
+  de um compartilhamento de projeto. O volume sozinho não prova intenção.
+  Compare com a tarefa agendada e com o dono da conta de serviço.
+version: 1.0.0
+kind: Scheduled

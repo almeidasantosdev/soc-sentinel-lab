@@ -1,0 +1,75 @@
+id: 6faac830-7e18-58ea-b414-330062d7b09f
+name: Clique permitido em URL de phishing
+description: |
+  Esta consulta identifica cliques permitidos em URLs cujo domínio usa
+  um TLD frequente em golpe ou imita uma marca conhecida. Cliques já
+  bloqueados ficam de fora: o controle funcionou e o caso vai para caçada.
+severity: Medium
+requiredDataConnectors:
+  - connectorId: MicrosoftThreatProtection
+    dataTypes:
+      - UrlClickEvents
+queryFrequency: 1h
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+status: Available
+tactics:
+  - InitialAccess
+relevantTechniques:
+  - T1566
+  - T1566.002
+query: |
+  let suspiciousTlds = dynamic(["zip", "mov", "ru", "top", "click", "xyz"]);
+  let lookalikeTokens = dynamic(["micr0soft", "microsft", "login-verify", "secure-update", "paypa1"]);
+  UrlClickEvents
+  | where ActionType =~ "ClickAllowed"
+  | extend Domain = tolower(tostring(parse_url(Url).Host))
+  | extend Tld = tolower(tostring(split(Domain, ".")[-1]))
+  | where isnotempty(Domain)
+  | where Domain !endswith "contoso-lab.example"
+  | where Tld in (suspiciousTlds) or Domain has_any (lookalikeTokens)
+  | extend
+      Name = tostring(split(AccountUpn, "@")[0]),
+      UPNSuffix = tostring(split(AccountUpn, "@")[1]),
+      StartTime = TimeGenerated,
+      EndTime = TimeGenerated
+  | project
+      StartTime,
+      EndTime,
+      AccountUpn,
+      Name,
+      UPNSuffix,
+      Url,
+      Domain,
+      ActionType,
+      IPAddress,
+      NetworkMessageId
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: AccountUpn
+      - identifier: Name
+        columnName: Name
+      - identifier: UPNSuffix
+        columnName: UPNSuffix
+  - entityType: URL
+    fieldMappings:
+      - identifier: Url
+        columnName: Url
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: IPAddress
+alertDetailsOverride:
+  alertDisplayNameFormat: "Clique permitido de {{AccountUpn}}"
+  alertDescriptionFormat: "Domínio {{Domain}} passou do controle de clique."
+eventGroupingSettings:
+  aggregationKind: AlertPerResult
+falsePositives: |
+  Domínio novo e legítimo em TLD genérico, encurtador interno e campanha
+  de marketing. A lista de TLDs e de imitações é didática, não uma
+  reputação completa. Confirme a mensagem de origem antes de conter a conta.
+version: 1.0.0
+kind: Scheduled
