@@ -1,0 +1,40 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Instalar dependências de validação
+        run: python -m pip install -r tools/requirements.txt
+
+      - name: Validar schemas, MITRE, amostras e artefatos gerados
+        run: python tools/validate_content.py
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+      - name: Lint das consultas KQL
+        run: dotnet run --project tools/kql-lint --configuration Release -- .kql-build sample-data/runnable
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"

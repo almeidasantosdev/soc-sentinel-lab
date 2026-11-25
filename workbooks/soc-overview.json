@@ -1,0 +1,114 @@
+{
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json",
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## Visão do SOC\n\nPainel de laboratório. Os números abaixo só fazem sentido com dados sintéticos ingeridos neste workspace ou com os conectores de um ambiente de estudo. Não use este workbook em produção.\n"
+      },
+      "name": "introducao"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "8f0a1c2e-6b3d-4e5f-9a10-labtime000001",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Intervalo",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 86400000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000,
+                  "displayName": "1 hora"
+                },
+                {
+                  "durationMs": 86400000,
+                  "displayName": "24 horas"
+                },
+                {
+                  "durationMs": 604800000,
+                  "displayName": "7 dias"
+                }
+              ],
+              "allowCustom": true
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parametros"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| summarize Alerts = count() by AlertSeverity\n| order by AlertSeverity asc\n",
+        "size": 3,
+        "title": "Alertas por severidade",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "name": "alertas-por-severidade"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| where isnotempty(CompromisedEntity)\n| summarize Alerts = count(), LastSeen = max(TimeGenerated) by CompromisedEntity, AlertSeverity\n| top 10 by Alerts desc\n",
+        "size": 0,
+        "title": "Principais entidades nos alertas",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "principais-entidades"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where ResultType != \"0\"\n| summarize Failures = count() by bin(TimeGenerated, 1h)\n| order by TimeGenerated asc\n",
+        "size": 0,
+        "title": "Falhas de entrada ao longo do tempo",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      },
+      "name": "falhas-de-entrada"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where ResultType != \"0\"\n| summarize Failures = count(), IPs = dcount(IPAddress) by UserPrincipalName\n| top 10 by Failures desc\n",
+        "size": 0,
+        "title": "Contas com mais falhas de entrada",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "contas-com-falha"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "SecurityAlert permanece vazio até que uma regra agendada dispare neste workspace. As falhas de entrada aparecem assim que SigninLogs tiver eventos, inclusive os sintéticos deste laboratório.\n"
+      },
+      "name": "nota"
+    }
+  ],
+  "styleSettings": {},
+  "fromTemplateId": "soc-sentinel-lab-overview"
+}

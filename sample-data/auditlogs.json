@@ -1,0 +1,94 @@
+[
+  {
+    "TimeGenerated": "2026-03-16T16:00:00Z",
+    "Category": "RoleManagement",
+    "OperationName": "Add member to role",
+    "Result": "success",
+    "CorrelationId": "lab-corr-0001",
+    "InitiatedBy": {
+      "user": {
+        "userPrincipalName": "admin.soc@contoso-lab.example"
+      }
+    },
+    "TargetResources": [
+      {
+        "type": "User",
+        "userPrincipalName": "bruno.lima@contoso-lab.example",
+        "displayName": "bruno.lima"
+      },
+      {
+        "type": "Role",
+        "displayName": "Global Administrator"
+      }
+    ]
+  },
+  {
+    "TimeGenerated": "2026-03-16T16:30:00Z",
+    "Category": "RoleManagement",
+    "OperationName": "Add member to role",
+    "Result": "success",
+    "CorrelationId": "lab-corr-0002",
+    "InitiatedBy": {
+      "user": {
+        "userPrincipalName": "admin.soc@contoso-lab.example"
+      }
+    },
+    "TargetResources": [
+      {
+        "type": "User",
+        "userPrincipalName": "estagiario.lab@contoso-lab.example",
+        "displayName": "estagiario.lab"
+      },
+      {
+        "type": "Role",
+        "displayName": "Directory Readers"
+      }
+    ]
+  },
+  {
+    "TimeGenerated": "2026-03-16T16:40:00Z",
+    "Category": "RoleManagement",
+    "OperationName": "Add member to role",
+    "Result": "failure",
+    "CorrelationId": "lab-corr-0003",
+    "InitiatedBy": {
+      "user": {
+        "userPrincipalName": "admin.soc@contoso-lab.example"
+      }
+    },
+    "TargetResources": [
+      {
+        "type": "User",
+        "userPrincipalName": "carla.nunes@contoso-lab.example",
+        "displayName": "carla.nunes"
+      },
+      {
+        "type": "Role",
+        "displayName": "Security Administrator"
+      }
+    ]
+  },
+  {
+    "TimeGenerated": "2026-03-16T23:10:00Z",
+    "Category": "RoleManagement",
+    "OperationName": "Add member to role",
+    "Result": "success",
+    "CorrelationId": "lab-corr-0004",
+    "InitiatedBy": {
+      "user": {
+        "userPrincipalName": "admin.soc@contoso-lab.example"
+      }
+    },
+    "TargetResources": [
+      {
+        "type": "User",
+        "userPrincipalName": "diego.souza@contoso-lab.example",
+        "displayName": "diego.souza"
+      },
+      {
+        "type": "Role",
+        "displayName": "User Administrator"
+      }
+    ]
+  }
+]

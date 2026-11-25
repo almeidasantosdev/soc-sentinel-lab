@@ -1,0 +1,52 @@
+id: 78f78c60-93a4-5ccd-bef0-95d199bc9f3f
+name: Entradas com protocolo de autenticação legado
+description: |
+  Esta consulta lista entradas feitas com IMAP, POP, SMTP ou ActiveSync. Esses protocolos não aplicam os mesmos controles de uma entrada interativa moderna.
+requiredDataConnectors:
+  - connectorId: AzureActiveDirectory
+    dataTypes:
+      - SigninLogs
+tactics:
+  - CredentialAccess
+  - InitialAccess
+relevantTechniques:
+  - T1110
+  - T1078.004
+query: |
+  SigninLogs
+  | where ClientAppUsed in (
+      "IMAP4",
+      "POP3",
+      "SMTP",
+      "Authenticated SMTP",
+      "Exchange ActiveSync",
+      "Other clients"
+  )
+  | summarize
+      Attempts = count(),
+      Applications = make_set(AppDisplayName, 5),
+      IPs = make_set(IPAddress, 5),
+      StartTime = min(TimeGenerated),
+      EndTime = max(TimeGenerated)
+      by UserPrincipalName, ClientAppUsed
+  | extend
+      timestamp = EndTime,
+      Name = tostring(split(UserPrincipalName, "@")[0]),
+      UPNSuffix = tostring(split(UserPrincipalName, "@")[1]),
+      IPAddress = tostring(IPs[0])
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: UserPrincipalName
+      - identifier: Name
+        columnName: Name
+      - identifier: UPNSuffix
+        columnName: UPNSuffix
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: IPAddress
+falsePositives: |
+  Aplicação de sala de reunião e dispositivo móvel antigo ainda autorizado. Confirme a exceção documentada.
+version: 1.0.0

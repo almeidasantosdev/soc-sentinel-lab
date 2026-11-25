@@ -1,0 +1,65 @@
+// Consulta pronta para teste neste laboratório.
+// Os eventos são sintéticos. O let vale só para esta execução e não grava dados.
+let SigninLogs = datatable (
+    TimeGenerated: datetime,
+    UserPrincipalName: string,
+    UserDisplayName: string,
+    AppDisplayName: string,
+    IPAddress: string,
+    Location: string,
+    ResultType: string,
+    ResultDescription: string,
+    ClientAppUsed: string,
+    UserAgent: string,
+    AuthenticationRequirement: string,
+    ConditionalAccessStatus: string
+)
+[
+    datetime(2026-03-16T08:00:00Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:01Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:02Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:03Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:04Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:05Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:06Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:07Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:08Z), "ana.costa@contoso-lab.example", "Ana Costa", "Correio", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:09Z), "ana.costa@contoso-lab.example", "Ana Costa", "Correio", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:10Z), "ana.costa@contoso-lab.example", "Ana Costa", "Correio", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:00:11Z), "ana.costa@contoso-lab.example", "Ana Costa", "Correio", "203.0.113.10", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T08:40:00Z), "ana.costa@contoso-lab.example", "Ana Costa", "Portal de Vendas", "192.0.2.10", "Brasil", "0", "Sucesso", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:01:00Z), "user01@contoso-lab.example", "Usuario 01", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:02:00Z), "user02@contoso-lab.example", "Usuario 02", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:03:00Z), "user03@contoso-lab.example", "Usuario 03", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:04:00Z), "user04@contoso-lab.example", "Usuario 04", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:05:00Z), "user05@contoso-lab.example", "Usuario 05", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:06:00Z), "user06@contoso-lab.example", "Usuario 06", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:07:00Z), "user07@contoso-lab.example", "Usuario 07", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:08:00Z), "user08@contoso-lab.example", "Usuario 08", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:09:00Z), "user09@contoso-lab.example", "Usuario 09", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:10:00Z), "user10@contoso-lab.example", "Usuario 10", "Office 365", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T09:30:00Z), "user04@contoso-lab.example", "Usuario 04", "Correio", "198.51.100.23", "Estados Unidos", "50126", "Falha de senha", "IMAP4", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T10:00:00Z), "bruno.lima@contoso-lab.example", "Bruno Lima", "Portal de Vendas", "192.0.2.30", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T10:02:00Z), "bruno.lima@contoso-lab.example", "Bruno Lima", "Portal de Vendas", "192.0.2.30", "Brasil", "50126", "Falha de senha", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T11:00:00Z), "carla.nunes@contoso-lab.example", "Carla Nunes", "Portal de Vendas", "192.0.2.20", "Brasil", "0", "Sucesso", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T11:35:00Z), "carla.nunes@contoso-lab.example", "Carla Nunes", "Portal de Vendas", "198.51.100.77", "Japao", "0", "Sucesso", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T12:00:00Z), "diego.souza@contoso-lab.example", "Diego Souza", "Portal de Vendas", "192.0.2.45", "Brasil", "0", "Sucesso", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied",
+    datetime(2026-03-16T22:30:00Z), "diego.souza@contoso-lab.example", "Diego Souza", "Portal de Vendas", "198.51.100.90", "Portugal", "0", "Sucesso", "Browser", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "singleFactorAuthentication", "notApplied"
+];
+SigninLogs
+| where ResultType !in ("0", "50125", "50140")
+| summarize
+    AppCount = dcount(AppDisplayName),
+    FailureCount = count(),
+    Applications = make_set(AppDisplayName, 10),
+    IPs = make_set(IPAddress, 10),
+    StartTime = min(TimeGenerated),
+    EndTime = max(TimeGenerated)
+    by UserPrincipalName
+| where AppCount >= 2 and FailureCount >= 5
+| extend
+    timestamp = EndTime,
+    Name = tostring(split(UserPrincipalName, "@")[0]),
+    UPNSuffix = tostring(split(UserPrincipalName, "@")[1]),
+    IPAddress = tostring(IPs[0])
+| order by FailureCount desc

@@ -1,0 +1,245 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "title": "Enriquecer IP e avisar o plantão",
+    "description": "Modelo de Logic App para incidente do Sentinel. Enriquece cada IP, comenta o incidente, publica no Teams e envia e-mail. Não desativa usuário."
+  },
+  "parameters": {
+    "PlaybookName": {
+      "type": "string",
+      "defaultValue": "Enrich-IP-Notify-Lab",
+      "metadata": {
+        "description": "Nome do fluxo no grupo de recursos de laboratório."
+      }
+    },
+    "TeamsWebhookUrl": {
+      "type": "securestring",
+      "metadata": {
+        "description": "URL do webhook de entrada do Teams. Não grave este valor no repositório."
+      }
+    },
+    "NotificationEmail": {
+      "type": "string",
+      "defaultValue": "soc-lab@contoso-lab.example",
+      "metadata": {
+        "description": "Caixa que recebe o resumo do incidente."
+      }
+    },
+    "EnrichmentBaseUrl": {
+      "type": "string",
+      "defaultValue": "https://ipwho.is/",
+      "metadata": {
+        "description": "Prefixo do enriquecimento. Precisa terminar com barra. Troque por um serviço aprovado antes de qualquer incidente real."
+      }
+    }
+  },
+  "variables": {
+    "sentinelConnectionName": "[concat('azuresentinel-', parameters('PlaybookName'))]",
+    "officeConnectionName": "[concat('office365-', parameters('PlaybookName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[variables('sentinelConnectionName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "displayName": "[parameters('PlaybookName')]",
+        "api": {
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azuresentinel')]"
+        },
+        "customParameterValues": {},
+        "parameterValueType": "Alternative"
+      }
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[variables('officeConnectionName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "displayName": "[parameters('PlaybookName')]",
+        "api": {
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
+        },
+        "customParameterValues": {},
+        "parameterValueType": "Alternative"
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('PlaybookName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('sentinelConnectionName'))]",
+        "[resourceId('Microsoft.Web/connections', variables('officeConnectionName'))]"
+      ],
+      "tags": {
+        "purpose": "lab"
+      },
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            },
+            "EnrichmentBaseUrl": {
+              "defaultValue": "https://ipwho.is/",
+              "type": "String"
+            },
+            "TeamsWebhookUrl": {
+              "type": "SecureString"
+            },
+            "NotificationEmail": {
+              "defaultValue": "soc-lab@contoso-lab.example",
+              "type": "String"
+            }
+          },
+          "triggers": {
+            "Microsoft_Sentinel_incident": {
+              "type": "ApiConnectionWebhook",
+              "inputs": {
+                "body": {
+                  "callback_url": "@{listCallbackUrl()}"
+                },
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                  }
+                },
+                "path": "/incident-creation"
+              }
+            }
+          },
+          "actions": {
+            "Obter_IPs": {
+              "type": "ApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "method": "post",
+                "path": "/entities/ip",
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                  }
+                },
+                "body": "@triggerBody()?['object']?['properties']?['relatedEntities']"
+              }
+            },
+            "Enviar_email": {
+              "type": "ApiConnection",
+              "runAfter": {
+                "Obter_IPs": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "method": "post",
+                "path": "/v2/Mail",
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['office365']['connectionId']"
+                  }
+                },
+                "body": {
+                  "To": "@parameters('NotificationEmail')",
+                  "Importance": "Normal",
+                  "Subject": "Incidente @{triggerBody()?['object']?['properties']?['incidentNumber']} - @{triggerBody()?['object']?['properties']?['title']}",
+                  "Body": "<p>Severidade: @{triggerBody()?['object']?['properties']?['severity']}<br>Descrição: @{triggerBody()?['object']?['properties']?['description']}<br>O enriquecimento dos IPs segue no comentário do incidente. Nenhuma conta é desativada por este fluxo.</p>"
+                }
+              }
+            },
+            "Para_cada_IP": {
+              "type": "Foreach",
+              "foreach": "@body('Obter_IPs')?['IPs']",
+              "runAfter": {
+                "Obter_IPs": [
+                  "Succeeded"
+                ]
+              },
+              "actions": {
+                "Enriquecer_IP": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "GET",
+                    "uri": "@{concat(parameters('EnrichmentBaseUrl'), items('Para_cada_IP')?['Address'])}"
+                  }
+                },
+                "Comentar_incidente": {
+                  "type": "ApiConnection",
+                  "runAfter": {
+                    "Enriquecer_IP": [
+                      "Succeeded"
+                    ]
+                  },
+                  "inputs": {
+                    "method": "post",
+                    "path": "/Incidents/Comment",
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                      }
+                    },
+                    "body": {
+                      "incidentArmId": "@triggerBody()?['object']?['id']",
+                      "message": "<p>IP @{items('Para_cada_IP')?['Address']}<br>País: @{body('Enriquecer_IP')?['country']}<br>Cidade: @{body('Enriquecer_IP')?['city']}</p>"
+                    }
+                  }
+                },
+                "Publicar_no_Teams": {
+                  "type": "Http",
+                  "runAfter": {
+                    "Enriquecer_IP": [
+                      "Succeeded"
+                    ]
+                  },
+                  "inputs": {
+                    "method": "POST",
+                    "uri": "@parameters('TeamsWebhookUrl')",
+                    "headers": {
+                      "Content-Type": "application/json"
+                    },
+                    "body": {
+                      "text": "Incidente @{triggerBody()?['object']?['properties']?['incidentNumber']}: IP @{items('Para_cada_IP')?['Address']} em @{body('Enriquecer_IP')?['country']} / @{body('Enriquecer_IP')?['city']}"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuresentinel": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('sentinelConnectionName'))]",
+                "connectionName": "[variables('sentinelConnectionName')]",
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azuresentinel')]"
+              },
+              "office365": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('officeConnectionName'))]",
+                "connectionName": "[variables('officeConnectionName')]",
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
+              }
+            }
+          },
+          "EnrichmentBaseUrl": {
+            "value": "[parameters('EnrichmentBaseUrl')]"
+          },
+          "TeamsWebhookUrl": {
+            "value": "[parameters('TeamsWebhookUrl')]"
+          },
+          "NotificationEmail": {
+            "value": "[parameters('NotificationEmail')]"
+          }
+        }
+      }
+    }
+  ]
+}

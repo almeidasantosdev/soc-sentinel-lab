@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Nome do workspace de Log Analytics do laboratório."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "apiVersion": "2023-02-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/Microsoft.SecurityInsights/', 'b8c7801e-e2e0-5625-a574-f1f2a3c1cd7a')]",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Exclusão em massa de arquivos",
+        "description": "Esta consulta identifica uma conta que apagou muitos objetos distintos\nno mesmo computador. O evento 4663 com acesso DELETE ou máscara %%1537\nrepresenta exclusão auditada no Windows.",
+        "severity": "High",
+        "enabled": false,
+        "query": "let deleteThreshold = 25;\nSecurityEvent\n| where EventID == 4663\n| where AccessList has \"DELETE\" or AccessList has \"%%1537\"\n| where isnotempty(ObjectName) and isnotempty(Account)\n| summarize\n    DeletedObjects = dcount(ObjectName),\n    SampleObjects = make_set(ObjectName, 8),\n    StartTime = min(TimeGenerated),\n    EndTime = max(TimeGenerated)\n    by Account, Computer\n| where DeletedObjects >= deleteThreshold\n| extend\n    DeletedObjectsText = tostring(DeletedObjects),\n    SampleObjectsText = strcat_array(SampleObjects, \"; \")",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "Impact"
+        ],
+        "techniques": [
+          "T1485"
+        ],
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "Account"
+              }
+            ]
+          },
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "Computer"
+              }
+            ]
+          }
+        ],
+        "eventGroupingSettings": {
+          "aggregationKind": "AlertPerResult"
+        },
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5H",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+          }
+        },
+        "customDetails": {
+          "DeletedObjects": "DeletedObjectsText",
+          "SampleObjects": "SampleObjectsText"
+        },
+        "alertDetailsOverride": {
+          "alertDisplayNameFormat": "Exclusão em massa por {{Account}} em {{Computer}}",
+          "alertDescriptionFormat": "{{DeletedObjectsText}} objetos distintos apagados na janela da regra."
+        }
+      }
+    }
+  ]
+}

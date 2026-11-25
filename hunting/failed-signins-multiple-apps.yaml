@@ -1,0 +1,47 @@
+id: c88757c2-d53c-5faf-86fa-bd61458fa1b3
+name: Falhas de entrada em vários aplicativos
+description: |
+  Esta consulta lista contas com falhas repetidas em mais de um aplicativo. Ajuda a separar erro de um cliente só de tentativa espalhada.
+requiredDataConnectors:
+  - connectorId: AzureActiveDirectory
+    dataTypes:
+      - SigninLogs
+tactics:
+  - CredentialAccess
+relevantTechniques:
+  - T1110
+  - T1110.001
+query: |
+  SigninLogs
+  | where ResultType !in ("0", "50125", "50140")
+  | summarize
+      AppCount = dcount(AppDisplayName),
+      FailureCount = count(),
+      Applications = make_set(AppDisplayName, 10),
+      IPs = make_set(IPAddress, 10),
+      StartTime = min(TimeGenerated),
+      EndTime = max(TimeGenerated)
+      by UserPrincipalName
+  | where AppCount >= 2 and FailureCount >= 5
+  | extend
+      timestamp = EndTime,
+      Name = tostring(split(UserPrincipalName, "@")[0]),
+      UPNSuffix = tostring(split(UserPrincipalName, "@")[1]),
+      IPAddress = tostring(IPs[0])
+  | order by FailureCount desc
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: UserPrincipalName
+      - identifier: Name
+        columnName: Name
+      - identifier: UPNSuffix
+        columnName: UPNSuffix
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: IPAddress
+falsePositives: |
+  Troca de senha que ainda não chegou a todos os clientes da mesma pessoa.
+version: 1.0.0

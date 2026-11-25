@@ -1,0 +1,72 @@
+// Consulta pronta para teste neste laboratório.
+// Os eventos são sintéticos. O let vale só para esta execução e não grava dados.
+let SecurityEvent = datatable (
+    TimeGenerated: datetime,
+    EventID: long,
+    Computer: string,
+    Account: string,
+    AccountType: string,
+    Activity: string,
+    LogonType: long,
+    IpAddress: string,
+    WorkstationName: string,
+    Process: string,
+    CommandLine: string,
+    ObjectName: string,
+    AccessList: string,
+    AccessMask: string
+)
+[
+    datetime(2026-03-16T15:10:00Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-00.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:01Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-01.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:02Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-02.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:03Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-03.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:04Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-04.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:05Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-05.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:06Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-06.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:07Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-07.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:08Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-08.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:09Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-09.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:10Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-10.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:11Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-11.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:12Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-12.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:13Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-13.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:14Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-14.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:15Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-15.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:16Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-16.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:17Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-17.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:18Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-18.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:19Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-19.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:20Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-20.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:21Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-21.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:22Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-22.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:23Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-23.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:24Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-24.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:25Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-25.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:26Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-26.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:27Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-27.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:28Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-28.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:10:29Z), 4663, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\FS01\\financeiro\\arquivo-29.xlsx", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:00:00Z), 4663, "WKS01.contoso-lab.example", "CONTOSO\\ana.costa", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\WKS01\\temp\\rascunho.tmp", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T15:01:00Z), 4663, "WKS01.contoso-lab.example", "CONTOSO\\ana.costa", "User", "4663 - An attempt was made to access an object.", 0, "", "", "", "", "\\\\WKS01\\temp\\notas.tmp", "%%1537 DELETE", "0x10000",
+    datetime(2026-03-16T10:15:00Z), 4624, "WKS01.contoso-lab.example", "CONTOSO\\ana.costa", "User", "4624 - An account was successfully logged on.", 10, "192.0.2.10", "WKS01", "", "", "", "", "",
+    datetime(2026-03-16T23:40:00Z), 4624, "WKS-ADM.contoso-lab.example", "CONTOSO\\admin.soc", "User", "4624 - An account was successfully logged on.", 10, "203.0.113.15", "WKS-ADM", "", "", "", "", "",
+    datetime(2026-03-16T23:10:00Z), 4624, "WKS02.contoso-lab.example", "CONTOSO\\diego.souza", "User", "4624 - An account was successfully logged on.", 2, "10.10.10.8", "WKS02", "", "", "", "", "",
+    datetime(2026-03-16T11:05:00Z), 4688, "FS01.contoso-lab.example", "CONTOSO\\svc-backup", "User", "4688 - A new process has been created.", 0, "", "", "powershell.exe", "powershell.exe -File C:\\scripts\\backup.ps1", "", "", "",
+    datetime(2026-03-16T23:50:00Z), 4688, "WKS01.contoso-lab.example", "CONTOSO\\ana.costa", "User", "4688 - A new process has been created.", 0, "", "", "powershell.exe", "powershell.exe -nop -w hidden -enc SQBFAFgA", "", "", ""
+];
+let deleteThreshold = 25;
+SecurityEvent
+| where EventID == 4663
+| where AccessList has "DELETE" or AccessList has "%%1537"
+| where isnotempty(ObjectName) and isnotempty(Account)
+| summarize
+    DeletedObjects = dcount(ObjectName),
+    SampleObjects = make_set(ObjectName, 8),
+    StartTime = min(TimeGenerated),
+    EndTime = max(TimeGenerated)
+    by Account, Computer
+| where DeletedObjects >= deleteThreshold
+| extend
+    DeletedObjectsText = tostring(DeletedObjects),
+    SampleObjectsText = strcat_array(SampleObjects, "; ")

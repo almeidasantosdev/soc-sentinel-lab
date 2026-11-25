@@ -1,0 +1,65 @@
+id: 511e0e6e-0a5d-5b53-b541-cea3f29758d8
+name: Entrada externa negada em porta administrativa
+description: |
+  Esta consulta identifica volume de tentativas negadas, a partir de
+  endereços IP públicos, contra portas administrativas. O foco é
+  varredura ou acesso remoto indevido visto em log no formato CEF.
+severity: Medium
+requiredDataConnectors:
+  - connectorId: CEF
+    dataTypes:
+      - CommonSecurityLog
+queryFrequency: 1h
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+status: Available
+tactics:
+  - InitialAccess
+  - LateralMovement
+relevantTechniques:
+  - T1133
+  - T1021
+  - T1021.001
+query: |
+  let adminPorts = dynamic([22, 135, 445, 1433, 3389, 5985, 5986]);
+  let attemptThreshold = 5;
+  CommonSecurityLog
+  | where DestinationPort in (adminPorts)
+  | where DeviceAction in~ ("deny", "denied", "drop", "dropped", "block", "blocked")
+  | where isnotempty(SourceIP) and isnotempty(DestinationIP)
+  | where ipv4_is_private(SourceIP) == false
+  | summarize
+      Attempts = count(),
+      Ports = make_set(DestinationPort, 10),
+      Actions = make_set(DeviceAction, 5),
+      StartTime = min(TimeGenerated),
+      EndTime = max(TimeGenerated)
+      by SourceIP, DestinationIP, DeviceProduct
+  | where Attempts >= attemptThreshold
+  | extend
+      AttemptsText = tostring(Attempts),
+      PortsText = strcat_array(Ports, ",")
+entityMappings:
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: SourceIP
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: DestinationIP
+customDetails:
+  Attempts: AttemptsText
+  Ports: PortsText
+alertDetailsOverride:
+  alertDisplayNameFormat: "Varredura administrativa de {{SourceIP}} para {{DestinationIP}}"
+  alertDescriptionFormat: "{{AttemptsText}} tentativas negadas em portas administrativas."
+eventGroupingSettings:
+  aggregationKind: AlertPerResult
+falsePositives: |
+  Scanner de vulnerabilidade autorizado, monitoramento externo e
+  regra de firewall que registra a própria sonda. Confirme a janela
+  de mudança e o inventário de scanners antes de escalar.
+version: 1.0.0
+kind: Scheduled

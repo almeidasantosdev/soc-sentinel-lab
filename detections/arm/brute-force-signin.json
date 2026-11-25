@@ -1,0 +1,91 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Nome do workspace de Log Analytics do laboratório."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "apiVersion": "2023-02-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/Microsoft.SecurityInsights/', '4e4efe35-ad4f-5dc9-9bf5-5997e9bd2caa')]",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Força bruta em entradas do Entra ID",
+        "description": "Esta consulta identifica uma mesma conta com muitas falhas de entrada\na partir do mesmo endereço IP. O padrão é compatível com adivinhação\nde senha contra uma identidade conhecida.\nCódigos ignorados: 0 é sucesso; 50125 e 50140 são interrupções de\nregistro de senha ou de \"manter conectado\", não falha de credencial.",
+        "severity": "High",
+        "enabled": false,
+        "query": "let failureThreshold = 10;\nSigninLogs\n| where ResultType !in (\"0\", \"50125\", \"50140\")\n| where isnotempty(UserPrincipalName) and isnotempty(IPAddress)\n| summarize\n    FailureCount = count(),\n    Applications = make_set(AppDisplayName, 5),\n    ResultTypes = make_set(ResultType, 5),\n    Locations = make_set(Location, 5),\n    StartTime = min(TimeGenerated),\n    EndTime = max(TimeGenerated)\n    by UserPrincipalName, IPAddress\n| where FailureCount >= failureThreshold\n| extend\n    Name = tostring(split(UserPrincipalName, \"@\")[0]),\n    UPNSuffix = tostring(split(UserPrincipalName, \"@\")[1]),\n    FailureCountText = tostring(FailureCount),\n    ApplicationsText = strcat_array(Applications, \", \")",
+        "queryFrequency": "PT30M",
+        "queryPeriod": "PT30M",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "CredentialAccess"
+        ],
+        "techniques": [
+          "T1110",
+          "T1110.001"
+        ],
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "UserPrincipalName"
+              },
+              {
+                "identifier": "Name",
+                "columnName": "Name"
+              },
+              {
+                "identifier": "UPNSuffix",
+                "columnName": "UPNSuffix"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPAddress"
+              }
+            ]
+          }
+        ],
+        "eventGroupingSettings": {
+          "aggregationKind": "AlertPerResult"
+        },
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5H",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+          }
+        },
+        "customDetails": {
+          "FailureCount": "FailureCountText",
+          "Applications": "ApplicationsText"
+        },
+        "alertDetailsOverride": {
+          "alertDisplayNameFormat": "Força bruta de {{UserPrincipalName}} via {{IPAddress}}",
+          "alertDescriptionFormat": "{{FailureCountText}} falhas de entrada para a mesma conta e o mesmo IP."
+        }
+      }
+    }
+  ]
+}

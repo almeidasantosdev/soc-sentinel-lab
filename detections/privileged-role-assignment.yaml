@@ -1,0 +1,81 @@
+id: 7523548a-c44f-5df8-874e-11a8b133a63a
+name: Nova atribuição de função privilegiada
+description: |
+  Esta consulta identifica inclusão bem-sucedida de um usuário em uma
+  função privilegiada do Entra ID. O recorte cobre funções de diretório
+  com capacidade de alterar identidade, segurança ou dados da organização.
+severity: High
+requiredDataConnectors:
+  - connectorId: AzureActiveDirectory
+    dataTypes:
+      - AuditLogs
+queryFrequency: 1h
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+status: Available
+tactics:
+  - Persistence
+  - PrivilegeEscalation
+relevantTechniques:
+  - T1098
+  - T1098.003
+query: |
+  let privilegedRoles = dynamic([
+      "Global Administrator",
+      "Privileged Role Administrator",
+      "Security Administrator",
+      "Exchange Administrator",
+      "SharePoint Administrator",
+      "User Administrator",
+      "Application Administrator",
+      "Cloud Application Administrator"
+  ]);
+  AuditLogs
+  | where Category =~ "RoleManagement"
+  | where OperationName has "Add member to role"
+  | where Result =~ "success"
+  | mv-expand TargetResource = TargetResources
+  | extend ResourceType = tostring(TargetResource.type)
+  | extend ResourceName = tostring(TargetResource.displayName)
+  | extend ResourceUpn = tostring(TargetResource.userPrincipalName)
+  | extend ActorUpn = tostring(InitiatedBy.user.userPrincipalName)
+  | extend UserUpn = iff(ResourceType =~ "User", ResourceUpn, "")
+  | extend RoleName = iff(ResourceType =~ "Role", ResourceName, "")
+  | summarize
+      TargetUpn = max(UserUpn),
+      RoleName = max(RoleName),
+      StartTime = min(TimeGenerated),
+      EndTime = max(TimeGenerated)
+      by CorrelationId, OperationName, ActorUpn
+  | where RoleName in (privilegedRoles) and isnotempty(TargetUpn) and isnotempty(ActorUpn)
+  | extend
+      TargetName = tostring(split(TargetUpn, "@")[0]),
+      UPNSuffix = tostring(split(TargetUpn, "@")[1])
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: TargetUpn
+      - identifier: Name
+        columnName: TargetName
+      - identifier: UPNSuffix
+        columnName: UPNSuffix
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: ActorUpn
+customDetails:
+  RoleName: RoleName
+  ActorUpn: ActorUpn
+alertDetailsOverride:
+  alertDisplayNameFormat: "{{TargetUpn}} recebeu {{RoleName}}"
+  alertDescriptionFormat: "Atribuição feita por {{ActorUpn}}."
+eventGroupingSettings:
+  aggregationKind: AlertPerResult
+falsePositives: |
+  Concessão prevista em mudança, elegibilidade PIM já aprovada e
+  função temporária de plantão. A regra não distingue emergência
+  autorizada de persistência. Cruze com o chamado antes de reverter.
+version: 1.0.0
+kind: Scheduled
