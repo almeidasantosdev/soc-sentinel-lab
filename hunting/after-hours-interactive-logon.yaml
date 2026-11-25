@@ -1,0 +1,44 @@
+id: 7a1d125d-6434-534d-9ae6-47b2c7d44aa8
+name: Logon interativo fora do horário do laboratório
+description: |
+  Esta consulta lista logons de rede ou de área de trabalho remota fora de 08:00–19:00 UTC. Ajuste a janela para o fuso real da operação.
+requiredDataConnectors:
+  - connectorId: SecurityEvents
+    dataTypes:
+      - SecurityEvent
+tactics:
+  - InitialAccess
+  - LateralMovement
+relevantTechniques:
+  - T1078
+  - T1021.001
+query: |
+  SecurityEvent
+  | where EventID == 4624
+  | where LogonType in (3, 10)
+  | extend Hour = datetime_part("hour", TimeGenerated)
+  | where Hour < 8 or Hour >= 19
+  | project
+      timestamp = TimeGenerated,
+      Computer,
+      Account,
+      LogonType,
+      IpAddress,
+      WorkstationName
+  | order by timestamp desc
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: Account
+  - entityType: Host
+    fieldMappings:
+      - identifier: FullName
+        columnName: Computer
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: IpAddress
+falsePositives: |
+  Plantão, backup noturno e colaborador em outro fuso. A janela UTC é só do laboratório.
+version: 1.0.0

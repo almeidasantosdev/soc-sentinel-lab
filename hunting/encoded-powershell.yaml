@@ -1,0 +1,42 @@
+id: af610668-8821-5dab-b282-1a9fe9215faf
+name: PowerShell com conteúdo codificado
+description: |
+  Esta consulta lista processos powershell ou pwsh cuja linha de comando pede execução codificada ou decodifica Base64.
+requiredDataConnectors:
+  - connectorId: SecurityEvents
+    dataTypes:
+      - SecurityEvent
+tactics:
+  - Execution
+  - DefenseEvasion
+relevantTechniques:
+  - T1059
+  - T1059.001
+query: |
+  SecurityEvent
+  | where EventID == 4688
+  | where Process has "powershell" or Process has "pwsh"
+  | where CommandLine has "-enc" or CommandLine has "-encodedcommand" or CommandLine has "frombase64string"
+  | project
+      timestamp = TimeGenerated,
+      Computer,
+      Account,
+      Process,
+      CommandLine
+  | order by timestamp desc
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: Account
+  - entityType: Host
+    fieldMappings:
+      - identifier: FullName
+        columnName: Computer
+  - entityType: Process
+    fieldMappings:
+      - identifier: CommandLine
+        columnName: CommandLine
+falsePositives: |
+  Instalador e script de gestão que entregam o comando em Base64 de propósito. Leia o conteúdo decodificado antes de concluir.
+version: 1.0.0

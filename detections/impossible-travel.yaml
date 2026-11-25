@@ -1,0 +1,83 @@
+id: 2c7199c3-5b18-56b5-aa3a-275b78c10094
+name: Viagem impossível em entrada bem-sucedida
+description: |
+  Esta consulta identifica duas entradas bem-sucedidas da mesma conta,
+  em locais diferentes, com intervalo curto demais para um deslocamento
+  físico. O sinal usa o campo Location já presente no log de entrada.
+severity: Medium
+requiredDataConnectors:
+  - connectorId: AzureActiveDirectory
+    dataTypes:
+      - SigninLogs
+queryFrequency: 1h
+queryPeriod: 2h
+triggerOperator: gt
+triggerThreshold: 0
+status: Available
+tactics:
+  - InitialAccess
+  - CredentialAccess
+relevantTechniques:
+  - T1078
+  - T1078.004
+query: |
+  let maxMinutes = 120;
+  SigninLogs
+  | where ResultType == "0"
+  | where isnotempty(UserPrincipalName) and isnotempty(Location) and isnotempty(IPAddress)
+  | project TimeGenerated, UserPrincipalName, IPAddress, Location, AppDisplayName
+  | sort by UserPrincipalName asc, TimeGenerated asc
+  | serialize
+  | extend
+      PrevUser = prev(UserPrincipalName),
+      PrevLocation = prev(Location),
+      PrevIP = prev(IPAddress),
+      PrevTime = prev(TimeGenerated)
+  | where UserPrincipalName == PrevUser and Location != PrevLocation
+  | extend MinutesBetween = datetime_diff("minute", TimeGenerated, PrevTime)
+  | where MinutesBetween between (0 .. maxMinutes)
+  | extend
+      Name = tostring(split(UserPrincipalName, "@")[0]),
+      UPNSuffix = tostring(split(UserPrincipalName, "@")[1]),
+      MinutesBetweenText = tostring(MinutesBetween),
+      StartTime = PrevTime,
+      EndTime = TimeGenerated
+  | project
+      StartTime,
+      EndTime,
+      UserPrincipalName,
+      Name,
+      UPNSuffix,
+      IPAddress,
+      PrevIP,
+      Location,
+      PrevLocation,
+      MinutesBetweenText,
+      AppDisplayName
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: UserPrincipalName
+      - identifier: Name
+        columnName: Name
+      - identifier: UPNSuffix
+        columnName: UPNSuffix
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: IPAddress
+customDetails:
+  MinutesBetween: MinutesBetweenText
+  PreviousLocation: PrevLocation
+alertDetailsOverride:
+  alertDisplayNameFormat: "Viagem impossível de {{UserPrincipalName}}"
+  alertDescriptionFormat: "Entradas em {{PrevLocation}} e {{Location}} no intervalo da regra."
+eventGroupingSettings:
+  aggregationKind: AlertPerResult
+falsePositives: |
+  VPN, proxy de saída de nuvem e celular com mudança rápida de país
+  geram o mesmo padrão. Também ocorre quando o provedor de identidade
+  atribui o local pelo ponto de presença, não pelo usuário.
+version: 1.0.0
+kind: Scheduled

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.kql-build/
+tools/kql-lint/bin/
+tools/kql-lint/obj/
+.dotnet/

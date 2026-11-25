@@ -1,0 +1,48 @@
+// Consulta pronta para teste neste laboratório.
+// Os eventos são sintéticos. O let vale só para esta execução e não grava dados.
+let CommonSecurityLog = datatable (
+    TimeGenerated: datetime,
+    DeviceVendor: string,
+    DeviceProduct: string,
+    DeviceAction: string,
+    SourceIP: string,
+    DestinationIP: string,
+    SourcePort: long,
+    DestinationPort: long,
+    Protocol: string,
+    SentBytes: long,
+    ReceivedBytes: long,
+    SourceUserName: string,
+    DeviceName: string
+)
+[
+    datetime(2026-03-16T13:00:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 51000, 3389, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:01:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 51001, 3389, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:02:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 51002, 3389, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:03:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 51003, 3389, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:04:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 51004, 3389, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:05:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 51005, 3389, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:10:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 52000, 22, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:11:00Z), "LabFirewall", "LabGateway", "Deny", "203.0.113.40", "10.10.10.20", 52001, 22, "TCP", 0, 0, "", "fw-lab-01",
+    datetime(2026-03-16T13:20:00Z), "LabFirewall", "LabGateway", "Allow", "10.10.10.5", "10.10.10.20", 53000, 3389, "TCP", 0, 0, "CONTOSO\\admin.soc", "fw-lab-01",
+    datetime(2026-03-16T13:21:00Z), "LabFirewall", "LabGateway", "Allow", "10.10.10.5", "10.10.10.20", 53001, 3389, "TCP", 0, 0, "CONTOSO\\admin.soc", "fw-lab-01",
+    datetime(2026-03-16T13:22:00Z), "LabFirewall", "LabGateway", "Allow", "10.10.10.5", "10.10.10.20", 53002, 3389, "TCP", 0, 0, "CONTOSO\\admin.soc", "fw-lab-01",
+    datetime(2026-03-16T14:05:00Z), "LabFirewall", "LabGateway", "Allow", "10.10.10.50", "203.0.113.80", 54000, 443, "TCP", 250000000, 4096, "CONTOSO\\svc-backup", "fw-lab-01",
+    datetime(2026-03-16T14:20:00Z), "LabFirewall", "LabGateway", "Allow", "10.10.10.50", "192.0.2.40", 54001, 443, "TCP", 20000, 800, "CONTOSO\\svc-backup", "fw-lab-01"
+];
+let byteThreshold = 100000000;
+CommonSecurityLog
+| where DeviceAction in~ ("allow", "allowed", "accept", "accepted")
+| where SentBytes > 0
+| where isnotempty(SourceIP) and isnotempty(DestinationIP)
+| where ipv4_is_private(DestinationIP) == false
+| summarize
+    BytesOut = sum(SentBytes),
+    Ports = make_set(DestinationPort, 5),
+    StartTime = min(TimeGenerated),
+    EndTime = max(TimeGenerated)
+    by SourceIP, DestinationIP, SourceUserName
+| where BytesOut >= byteThreshold
+| extend
+    BytesOutText = tostring(BytesOut),
+    PortsText = strcat_array(Ports, ",")

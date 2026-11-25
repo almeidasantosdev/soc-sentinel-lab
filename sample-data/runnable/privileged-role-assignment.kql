@@ -1,0 +1,48 @@
+// Consulta pronta para teste neste laboratório.
+// Os eventos são sintéticos. O let vale só para esta execução e não grava dados.
+let AuditLogs = datatable (
+    TimeGenerated: datetime,
+    Category: string,
+    OperationName: string,
+    Result: string,
+    CorrelationId: string,
+    InitiatedBy: dynamic,
+    TargetResources: dynamic
+)
+[
+    datetime(2026-03-16T16:00:00Z), "RoleManagement", "Add member to role", "success", "lab-corr-0001", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"bruno.lima@contoso-lab.example","displayName":"bruno.lima"},{"type":"Role","displayName":"Global Administrator"}]),
+    datetime(2026-03-16T16:30:00Z), "RoleManagement", "Add member to role", "success", "lab-corr-0002", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"estagiario.lab@contoso-lab.example","displayName":"estagiario.lab"},{"type":"Role","displayName":"Directory Readers"}]),
+    datetime(2026-03-16T16:40:00Z), "RoleManagement", "Add member to role", "failure", "lab-corr-0003", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"carla.nunes@contoso-lab.example","displayName":"carla.nunes"},{"type":"Role","displayName":"Security Administrator"}]),
+    datetime(2026-03-16T23:10:00Z), "RoleManagement", "Add member to role", "success", "lab-corr-0004", dynamic({"user":{"userPrincipalName":"admin.soc@contoso-lab.example"}}), dynamic([{"type":"User","userPrincipalName":"diego.souza@contoso-lab.example","displayName":"diego.souza"},{"type":"Role","displayName":"User Administrator"}])
+];
+let privilegedRoles = dynamic([
+    "Global Administrator",
+    "Privileged Role Administrator",
+    "Security Administrator",
+    "Exchange Administrator",
+    "SharePoint Administrator",
+    "User Administrator",
+    "Application Administrator",
+    "Cloud Application Administrator"
+]);
+AuditLogs
+| where Category =~ "RoleManagement"
+| where OperationName has "Add member to role"
+| where Result =~ "success"
+| mv-expand TargetResource = TargetResources
+| extend ResourceType = tostring(TargetResource.type)
+| extend ResourceName = tostring(TargetResource.displayName)
+| extend ResourceUpn = tostring(TargetResource.userPrincipalName)
+| extend ActorUpn = tostring(InitiatedBy.user.userPrincipalName)
+| extend UserUpn = iff(ResourceType =~ "User", ResourceUpn, "")
+| extend RoleName = iff(ResourceType =~ "Role", ResourceName, "")
+| summarize
+    TargetUpn = max(UserUpn),
+    RoleName = max(RoleName),
+    StartTime = min(TimeGenerated),
+    EndTime = max(TimeGenerated)
+    by CorrelationId, OperationName, ActorUpn
+| where RoleName in (privilegedRoles) and isnotempty(TargetUpn) and isnotempty(ActorUpn)
+| extend
+    TargetName = tostring(split(TargetUpn, "@")[0]),
+    UPNSuffix = tostring(split(TargetUpn, "@")[1])

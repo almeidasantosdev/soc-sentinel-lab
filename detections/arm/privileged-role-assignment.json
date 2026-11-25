@@ -1,0 +1,92 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Nome do workspace de Log Analytics do laboratório."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "apiVersion": "2023-02-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/Microsoft.SecurityInsights/', '7523548a-c44f-5df8-874e-11a8b133a63a')]",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Nova atribuição de função privilegiada",
+        "description": "Esta consulta identifica inclusão bem-sucedida de um usuário em uma\nfunção privilegiada do Entra ID. O recorte cobre funções de diretório\ncom capacidade de alterar identidade, segurança ou dados da organização.",
+        "severity": "High",
+        "enabled": false,
+        "query": "let privilegedRoles = dynamic([\n    \"Global Administrator\",\n    \"Privileged Role Administrator\",\n    \"Security Administrator\",\n    \"Exchange Administrator\",\n    \"SharePoint Administrator\",\n    \"User Administrator\",\n    \"Application Administrator\",\n    \"Cloud Application Administrator\"\n]);\nAuditLogs\n| where Category =~ \"RoleManagement\"\n| where OperationName has \"Add member to role\"\n| where Result =~ \"success\"\n| mv-expand TargetResource = TargetResources\n| extend ResourceType = tostring(TargetResource.type)\n| extend ResourceName = tostring(TargetResource.displayName)\n| extend ResourceUpn = tostring(TargetResource.userPrincipalName)\n| extend ActorUpn = tostring(InitiatedBy.user.userPrincipalName)\n| extend UserUpn = iff(ResourceType =~ \"User\", ResourceUpn, \"\")\n| extend RoleName = iff(ResourceType =~ \"Role\", ResourceName, \"\")\n| summarize\n    TargetUpn = max(UserUpn),\n    RoleName = max(RoleName),\n    StartTime = min(TimeGenerated),\n    EndTime = max(TimeGenerated)\n    by CorrelationId, OperationName, ActorUpn\n| where RoleName in (privilegedRoles) and isnotempty(TargetUpn) and isnotempty(ActorUpn)\n| extend\n    TargetName = tostring(split(TargetUpn, \"@\")[0]),\n    UPNSuffix = tostring(split(TargetUpn, \"@\")[1])",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "Persistence",
+          "PrivilegeEscalation"
+        ],
+        "techniques": [
+          "T1098",
+          "T1098.003"
+        ],
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "TargetUpn"
+              },
+              {
+                "identifier": "Name",
+                "columnName": "TargetName"
+              },
+              {
+                "identifier": "UPNSuffix",
+                "columnName": "UPNSuffix"
+              }
+            ]
+          },
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "ActorUpn"
+              }
+            ]
+          }
+        ],
+        "eventGroupingSettings": {
+          "aggregationKind": "AlertPerResult"
+        },
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5H",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+          }
+        },
+        "customDetails": {
+          "RoleName": "RoleName",
+          "ActorUpn": "ActorUpn"
+        },
+        "alertDetailsOverride": {
+          "alertDisplayNameFormat": "{{TargetUpn}} recebeu {{RoleName}}",
+          "alertDescriptionFormat": "Atribuição feita por {{ActorUpn}}."
+        }
+      }
+    }
+  ]
+}

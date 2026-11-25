@@ -1,0 +1,65 @@
+id: 3cc9d02e-ab7b-5936-b31e-df9229ce7f0d
+name: Volume anômalo de saída para IP público
+description: |
+  Esta consulta identifica volume alto de bytes enviados para um
+  endereço IP público em tráfego permitido. O sinal é compatível com
+  exfiltração por um canal já liberado no firewall.
+severity: High
+requiredDataConnectors:
+  - connectorId: CEF
+    dataTypes:
+      - CommonSecurityLog
+queryFrequency: 1h
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+status: Available
+tactics:
+  - Exfiltration
+relevantTechniques:
+  - T1048
+  - T1567
+query: |
+  let byteThreshold = 100000000;
+  CommonSecurityLog
+  | where DeviceAction in~ ("allow", "allowed", "accept", "accepted")
+  | where SentBytes > 0
+  | where isnotempty(SourceIP) and isnotempty(DestinationIP)
+  | where ipv4_is_private(DestinationIP) == false
+  | summarize
+      BytesOut = sum(SentBytes),
+      Ports = make_set(DestinationPort, 5),
+      StartTime = min(TimeGenerated),
+      EndTime = max(TimeGenerated)
+      by SourceIP, DestinationIP, SourceUserName
+  | where BytesOut >= byteThreshold
+  | extend
+      BytesOutText = tostring(BytesOut),
+      PortsText = strcat_array(Ports, ",")
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: SourceUserName
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: DestinationIP
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: SourceIP
+customDetails:
+  BytesOut: BytesOutText
+  Ports: PortsText
+alertDetailsOverride:
+  alertDisplayNameFormat: "Saída volumosa de {{SourceUserName}} para {{DestinationIP}}"
+  alertDescriptionFormat: "{{BytesOutText}} bytes enviados para um IP público."
+eventGroupingSettings:
+  aggregationKind: AlertPerResult
+falsePositives: |
+  Backup externo autorizado, atualização grande de software e envio
+  legítimo para um parceiro. O limiar de 100 MB é ponto de partida de
+  laboratório e precisa ser calibrado com o baseline do ambiente.
+version: 1.0.0
+kind: Scheduled
